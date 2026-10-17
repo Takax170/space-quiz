@@ -165,8 +165,13 @@
     .primary:disabled { background: var(--soft); border-color: var(--line); color: var(--muted); }
     .primary:not(:disabled):hover span { transform: translateX(3px); }
     .primary:not(:disabled):active { transform: scale(.97); }
-    .panel-note { display: flex; align-items: center; justify-content: center; gap: 7px; color: var(--muted); font-size: 10px; margin-top: 22px; }
-    .keycap { padding: 0 4px; border: 1px solid var(--line); border-radius: 3px; font: 9px/1.6 "SFMono-Regular", Consolas, monospace; }
+    .keyboard-controls { margin-top: 22px; color: var(--muted); font-size: 12px; }
+    .keyboard-controls > summary { padding: 5px; text-align: center; cursor: pointer; }
+    .controls-help { margin-top: 12px; padding: 16px; border-radius: 12px; background: var(--soft); }
+    .controls-help ul { margin: 0; padding-left: 18px; }
+    .controls-help li + li { margin-top: 8px; }
+    .controls-help p { margin-top: 12px; }
+    .controls-help kbd { padding: 0 4px; border: 1px solid var(--line); border-radius: 3px; color: var(--text); font: .95em/1.6 "SFMono-Regular", Consolas, monospace; white-space: nowrap; }
     .footer { display: flex; justify-content: space-between; gap: 20px; padding: 22px 0 25px; color: var(--muted); font-size: 10px; letter-spacing: .2px; }
     .footer span { color: var(--text); }
     .results { text-align: center; padding-top: 7px; }
@@ -342,7 +347,18 @@
             </details>
           </div>
         </section>
-        <p class="panel-note"><span class="keycap" aria-hidden="true">A</span><span class="keycap" aria-hidden="true">D</span> to choose <span aria-hidden="true">/</span> <span class="keycap" aria-hidden="true">&#8629;</span> to continue</p>
+        <details class="keyboard-controls">
+          <summary>Keyboard controls</summary>
+          <div class="controls-help">
+            <ul>
+              <li><kbd>Tab</kbd> moves focus forward; <kbd>Shift+Tab</kbd> moves it back.</li>
+              <li><kbd>Enter</kbd> or <kbd>Space</kbd> activates the focused control, including opening or closing this guide and the answer review.</li>
+              <li><kbd>A</kbd> through <kbd>D</kbd> chooses an unanswered option. Answers lock after selection.</li>
+              <li>After answering, <kbd>Enter</kbd> advances to the next question or shows results.</li>
+            </ul>
+            <p>Quiz shortcuts apply only during the quiz, not on results, while using a disclosure or the theme toggle, or while editing fields.</p>
+          </div>
+        </details>
       </div>
     </div>
     <footer class="footer"><p>A little wiser with every answer.</p><p>No timer. Just curiosity. <span>Keep looking up.</span></p></footer>
@@ -553,7 +569,6 @@
     function showResults() {
       get("quiz").hidden = true;
       get("results").hidden = false;
-      document.querySelector(".panel-note").hidden = true;
       get("question-counter").textContent = "Mission complete";
       const reaction = score === questions.length
         ? ["\u2726", "Out of this world!", "A perfect mission. Your space knowledge is truly stellar."]
@@ -615,7 +630,7 @@
     document.addEventListener("keydown", (event) => {
       if (event.altKey || event.ctrlKey || event.metaKey || event.repeat || get("quiz").hidden) return;
       const target = event.target;
-      if (target instanceof HTMLElement && target.closest("input, textarea, select, [contenteditable], #theme-toggle")) return;
+      if (target instanceof HTMLElement && target.closest("input, textarea, select, [contenteditable], #theme-toggle, summary")) return;
       const index = letters.indexOf(event.key.toUpperCase());
       if (index !== -1 && !answered) {
         event.preventDefault();
@@ -632,7 +647,6 @@
       selections = [];
       get("results").hidden = true;
       get("quiz").hidden = false;
-      document.querySelector(".panel-note").hidden = false;
       document.querySelector(".review").open = false;
       document.querySelector(".score").classList.remove("is-updated");
       renderQuestion(true);
