@@ -22,6 +22,15 @@ Verify:
 - Results, accuracy, and answer review agree with the selected answers.
 - Result reactions change at scores 4, 7, and 10; check both sides of each boundary.
 - Restart resets score, progress, selections, question number, and the review disclosure.
+- Copy result appears only with results and copies only the Orbit quiz name,
+  score, and accuracy. Check exact text at 0/10, a mixed score, and 10/10.
+- Clipboard success shows a visible live confirmation. Denied or unavailable
+  clipboard access reveals an explicit message and a labeled, read-only summary
+  selected for manual copying, including when opened via `file://`.
+- Restart clears sharing feedback and the manual-copy field. A pending clipboard
+  response must not restore stale feedback or affect a subsequent run.
+- Verify native keyboard activation and manual copying, both themes, and 280px
+  layouts for the sharing controls as well as the quiz.
 - Native Tab, Shift+Tab, Enter, and Space navigation works; programmatic focus
   checks alone do not establish that real keystrokes work.
 - A-D select answers, Enter advances after an answer, and held keys cannot skip

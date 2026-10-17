@@ -76,7 +76,7 @@
     button, summary { -webkit-tap-highlight-color: transparent; }
     button { font: inherit; cursor: pointer; }
     button:disabled { cursor: default; }
-    button:focus-visible, summary:focus-visible { outline: 3px solid var(--accent); outline-offset: 5px; }
+    button:focus-visible, summary:focus-visible, textarea:focus-visible { outline: 3px solid var(--accent); outline-offset: 5px; }
     h1, h2, p { margin: 0; }
     h2:focus { outline: none; }
     button { touch-action: manipulation; }
@@ -182,6 +182,15 @@
     .result-stats strong { display: block; font-size: 20px; font-weight: 550; }
     .result-stats small { font-size: 10px; color: var(--muted); }
     .results .primary { width: 100%; }
+    .result-share { margin-bottom: 12px; }
+    .copy-result { width: 100%; min-height: 46px; padding: 12px 18px; border: 1px solid var(--line); border-radius: 10px; background: var(--raised); color: var(--text); font-size: 12px; font-weight: 600; }
+    .copy-result:not(:disabled):hover { border-color: var(--accent); background: var(--accent-soft); }
+    .copy-result:disabled { color: var(--muted); }
+    .copy-status { color: var(--muted); font-size: 12px; }
+    .copy-status:not(:empty) { margin-top: 10px; }
+    .manual-copy { margin-top: 12px; text-align: left; }
+    .manual-copy label { display: block; margin-bottom: 6px; font-size: 12px; font-weight: 600; }
+    .manual-copy textarea { display: block; width: 100%; min-height: 90px; padding: 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--raised); color: var(--text); font: inherit; font-size: 13px; resize: vertical; }
     .review { margin-top: 17px; text-align: left; }
     .review > summary { text-align: center; cursor: pointer; color: var(--muted); font-size: 12px; padding: 5px; }
     .review-list { list-style: none; padding: 0; margin: 18px 0 0; display: grid; gap: 12px; }
@@ -334,6 +343,14 @@
               <p class="result-caption">Your final score</p>
             </div>
             <div class="result-stats" id="result-stats"></div>
+            <div class="result-share">
+              <button class="copy-result" id="copy-result" type="button">Copy result</button>
+              <p class="copy-status" id="copy-status" role="status" aria-live="polite" aria-atomic="true"></p>
+              <div class="manual-copy" id="manual-copy" hidden>
+                <label for="result-summary">Result summary for manual copying</label>
+                <textarea id="result-summary" rows="3" readonly aria-describedby="copy-status" spellcheck="false"></textarea>
+              </div>
+            </div>
             <button class="primary" id="restart" type="button">Explore again <span aria-hidden="true">&#8594;</span></button>
             <div class="flight-log" id="flight-log" aria-label="Your answers at a glance"></div>
             <details class="review">
@@ -432,6 +449,7 @@
     let score = 0;
     let answered = false;
     let selections = [];
+    let copyRequest = 0;
 
     progress.replaceChildren(...questions.map(() => {
       const step = document.createElement("span");
@@ -567,6 +585,7 @@
       get("result-copy").textContent = reaction[2];
       get("final-score").innerHTML = `${score}<span> / ${questions.length}</span>`;
       const accuracy = Math.round(score / questions.length * 100);
+      get("result-summary").value = `Orbit space quiz: ${score}/${questions.length} \u2014 ${accuracy}% accuracy`;
       get("score-orbit").style.setProperty("--accuracy", `${accuracy}%`);
       get("result-stats").innerHTML = `<div><strong>${score}</strong><small>Correct</small></div><div><strong>${questions.length - score}</strong><small>Incorrect</small></div><div><strong>${accuracy}%</strong><small>Accuracy</small></div>`;
       get("flight-log").replaceChildren(...questions.map((item, index) => {
@@ -612,6 +631,31 @@
 
     get("next").addEventListener("click", nextQuestion);
 
+    get("copy-result").addEventListener("click", async () => {
+      if (get("results").hidden || get("copy-result").disabled) return;
+      const request = ++copyRequest;
+      const summary = get("result-summary").value;
+      get("copy-result").disabled = true;
+      get("manual-copy").hidden = true;
+      get("copy-status").textContent = "Copying result...";
+      try {
+        if (typeof navigator.clipboard?.writeText !== "function") {
+          throw new Error("Clipboard access is unavailable.");
+        }
+        await navigator.clipboard.writeText(summary);
+        if (request !== copyRequest) return;
+        get("copy-status").textContent = "Result copied! Ready to share.";
+      } catch {
+        if (request !== copyRequest) return;
+        get("copy-status").textContent = "Couldn't copy automatically. Copy the selected summary below using your device's copy command.";
+        get("manual-copy").hidden = false;
+        get("result-summary").focus();
+        get("result-summary").select();
+      } finally {
+        if (request === copyRequest) get("copy-result").disabled = false;
+      }
+    });
+
     document.addEventListener("keydown", (event) => {
       if (event.altKey || event.ctrlKey || event.metaKey || event.repeat || get("quiz").hidden) return;
       const target = event.target;
@@ -627,6 +671,11 @@
     });
 
     get("restart").addEventListener("click", () => {
+      copyRequest += 1;
+      get("copy-result").disabled = false;
+      get("copy-status").textContent = "";
+      get("manual-copy").hidden = true;
+      get("result-summary").value = "";
       current = 0;
       score = 0;
       selections = [];
