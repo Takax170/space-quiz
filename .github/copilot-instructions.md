@@ -35,6 +35,12 @@ Verify:
   checks alone do not establish that real keystrokes work.
 - A-D select answers, Enter advances after an answer, and held keys cannot skip
   questions. Shortcuts must not interfere with the theme button or form fields.
+- The Keyboard controls disclosure starts collapsed on reload and remains
+  available during the quiz and on results. Its open state persists through
+  questions, results, and restart, independently of the answer review.
+  Use real Enter and Space input to toggle it before and after answering and
+  on results; verify score, progress, and question state do not change.
+  Check held Enter on the guide and Next, and visible focus at 280px in both themes.
 - Light/dark system preferences and the manual theme toggle work. Manual theme
   overrides last until reload; initial theme always follows the system.
 - Reduced motion disables ambient, entrance, and feedback animation. Narrow
@@ -87,5 +93,7 @@ segments, ARIA progress values, and score. Results derive their review from
   Advancing and restarting focus the question heading; results focus their
   heading. Those headings use `tabindex="-1"` for programmatic focus. A-D labels
   identify choices visually and match the keyboard shortcuts.
+- Keep disclosures native: exclude summary targets from quiz shortcuts so Enter
+  and Space retain their normal toggle behavior without advancing the quiz.
 - Results include a score ring, per-question correctness strip, accuracy, and a
   detailed answer review. All derive from the same selections and questions.
