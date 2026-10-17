@@ -184,6 +184,11 @@
     .results .primary { width: 100%; }
     .review { margin-top: 17px; text-align: left; }
     .review > summary { text-align: center; cursor: pointer; color: var(--muted); font-size: 12px; padding: 5px; }
+    .review-filters { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
+    .review-filter { flex: 1; min-height: 44px; padding: 8px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--raised); color: var(--muted); font-size: 12px; }
+    .review-filter:hover { border-color: var(--accent); }
+    .review-filter[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+    .review-empty { margin-top: 18px; padding: 16px; border-radius: 12px; background: var(--soft); color: var(--green); font-size: 12px; }
     .review-list { list-style: none; padding: 0; margin: 18px 0 0; display: grid; gap: 12px; }
     .review-item { padding: 16px; background: var(--soft); border-radius: 12px; font-size: 12px; }
     .review-item strong { display: block; margin-bottom: 7px; }
@@ -338,6 +343,11 @@
             <div class="flight-log" id="flight-log" aria-label="Your answers at a glance"></div>
             <details class="review">
               <summary>Review your answers</summary>
+              <div class="review-filters" role="group" aria-label="Filter answer review">
+                <button class="review-filter" id="review-all" type="button" aria-pressed="true" aria-controls="review-list">All answers</button>
+                <button class="review-filter" id="review-missed" type="button" aria-pressed="false" aria-controls="review-list">Missed only</button>
+              </div>
+              <p class="review-empty" id="review-empty" role="status" hidden>Perfect mission! You didn't miss any questions.</p>
               <ol class="review-list" id="review-list"></ol>
             </details>
           </div>
@@ -578,15 +588,25 @@
         step.style.setProperty("--index", String(index));
         return step;
       }));
-      get("review-list").replaceChildren(...questions.map((item, index) => {
+      renderReview();
+      get("result-title").focus();
+    }
+
+    function renderReview(missedOnly = false) {
+      get("review-all").setAttribute("aria-pressed", String(!missedOnly));
+      get("review-missed").setAttribute("aria-pressed", String(missedOnly));
+      const rows = selections.flatMap((selection, index) => {
+        const item = questions[index];
+        const correct = selection === item.correct;
+        if (missedOnly && correct) return [];
         const row = document.createElement("li");
-        const correct = selections[index] === item.correct;
+        row.value = index + 1;
         row.className = "review-item";
         const title = document.createElement("strong");
         title.textContent = `${index + 1}. ${item.question}`;
         const choice = document.createElement("p");
         choice.className = correct ? "review-correct" : "review-wrong";
-        choice.textContent = `${correct ? "\u2713" : "\u00d7"} Your answer: ${item.answers[selections[index]]}`;
+        choice.textContent = `${correct ? "\u2713" : "\u00d7"} Your answer: ${item.answers[selection]}`;
         row.append(title, choice);
         if (!correct) {
           const answer = document.createElement("p");
@@ -598,10 +618,15 @@
         explanation.className = "explanation";
         explanation.textContent = item.explanation;
         row.append(explanation);
-        return row;
-      }));
-      get("result-title").focus();
+        return [row];
+      });
+      get("review-list").replaceChildren(...rows);
+      get("review-list").hidden = rows.length === 0;
+      get("review-empty").hidden = !missedOnly || rows.length > 0;
     }
+
+    get("review-all").addEventListener("click", () => renderReview());
+    get("review-missed").addEventListener("click", () => renderReview(true));
 
     function nextQuestion() {
       if (!answered || current >= questions.length) return;
@@ -634,6 +659,7 @@
       get("quiz").hidden = false;
       document.querySelector(".panel-note").hidden = false;
       document.querySelector(".review").open = false;
+      renderReview();
       document.querySelector(".score").classList.remove("is-updated");
       renderQuestion(true);
     });
